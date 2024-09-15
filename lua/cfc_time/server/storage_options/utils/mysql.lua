@@ -1,5 +1,4 @@
 local storage = CFCTime.Storage
-local logger = CFCTime.Logger
 local config = CFCTime.Config
 
 storage.preparedQueries = {}
@@ -73,16 +72,10 @@ function storage:AddPreparedStatement( name, query )
         error( "An error has occured in a prepared statement! '" .. err .. "' - " .. errQuery )
     end
 
-    statement.onSuccess = function()
-        logger:debug( "Created prepared statement of name: " .. name .. " with query: [[ " .. query .. " ]]" )
-    end
-
     self.preparedQueries[name] = statement
 end
 
 function storage:PrepareStatements()
-    logger:info( "Constructing prepared statements..." )
-
     local realm = self.realm
 
     local newUser = "INSERT INTO users (steam_id) VALUES(?) ON DUPLICATE KEY UPDATE id=id"

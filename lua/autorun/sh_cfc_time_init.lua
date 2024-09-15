@@ -1,8 +1,4 @@
-require( "logger" )
-
 CFCTime = {}
-
-CFCTime.Logger = Logger( "CFCTime" )
 
 AddCSLuaFile( "cfc_time/shared/config.lua" )
 AddCSLuaFile( "cfc_time/shared/utime_compat.lua" )
