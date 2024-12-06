@@ -1,11 +1,9 @@
 include( "utils/sqlite.lua" )
 
 local storage = CFCTime.Storage
-local logger = CFCTime.Logger
 local utils = CFCTime.Utils
 
 hook.Add( "PostGamemodeLoaded", "CFC_Time_DBInit", function()
-    logger:info( "Gamemoded loaded, beginning database init..." )
     storage:SetupTables()
     storage:RunSessionCleanup()
 end )
@@ -44,8 +42,6 @@ end
 
 function storage:PlayerInit( ply, sessionStart, callback )
     local steamID = ply:SteamID64()
-
-    logger:debug( "Receiving PlayerInit call for: " .. tostring( steamID ) )
 
     sql.Begin()
 

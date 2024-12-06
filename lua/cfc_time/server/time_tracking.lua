@@ -1,7 +1,6 @@
 CFCTime.ctime = CFCTime.ctime or {}
 
 local ctime = CFCTime.ctime
-local logger = CFCTime.Logger:scope( "Tracking" )
 local storage = CFCTime.Storage
 
 local getNow = os.time
@@ -45,8 +44,6 @@ function ctime:broadcastTimes()
 end
 
 function ctime:untrackPlayer( steamID64 )
-    logger:debug( "Untracking player ", steamID64 )
-
     self.sessions[steamID64] = nil
     self.sessionIDs[steamID64] = nil
     self.totalTimes[steamID64] = nil
@@ -79,7 +76,6 @@ function ctime:updateTimes()
             local newTotal = totalTimes[steamID64] + timeDelta
             totalTimes[steamID64] = newTotal
         else
-            logger:debug( "Player is invalid in updateTimes, setting departed", steamID64 )
             totalTimes[steamID64] = nil
             data.departed = departed or now
         end
@@ -88,9 +84,6 @@ function ctime:updateTimes()
     self.lastUpdate = now
 
     if table.IsEmpty( batch ) then return end
-
-    logger:debug( "Updating " .. table.Count( batch ) .. " sessions:" )
-    logger:debug( batch )
 
     storage:UpdateBatch( batch, function()
         for sessionID, data in pairs( batch ) do
@@ -105,8 +98,6 @@ function ctime:updateTimes()
 end
 
 function ctime:startTimer()
-    logger:debug( "Starting timer" )
-
     local function timeUpdater()
         ProtectedCall( function()
             ctime:updateTimes()
@@ -122,7 +113,6 @@ function ctime:startTimer()
 end
 
 function ctime:stopTimer()
-    logger:debug( "Stopping timer" )
     timer.Remove( self.updateTimerName )
 end
 
@@ -150,8 +140,6 @@ function ctime:initPlayer( ply )
     end
 
     storage:PlayerInit( ply, now, function( data )
-        logger:debug( "Player init data: ", ply, data )
-
         local isFirstVisit = data.isFirstVisit
         local sessionID = data.sessionID
 
@@ -162,14 +150,12 @@ function ctime:initPlayer( ply )
         if isFirstVisit then return setupPly( 0, true ) end
 
         storage:GetTotalTime( steamID64, function( total )
-            logger:debug( "Got total time for ", ply, total )
             setupPly( total, false )
         end )
     end )
 end
 
 function ctime:cleanupPlayer( ply )
-    logger:debug( "Setting player departed after disconnect: ", ply )
     -- TODO: Verify bug report from the wiki: https://wiki.facepunch.com/gmod/GM:PlayerDisconnected
     local now = getNow()
     local steamID64 = ply:SteamID64()
@@ -178,10 +164,7 @@ function ctime:cleanupPlayer( ply )
         error( "Player " .. ply:GetName() .. " did not have a steamID64 on disconnect" )
     end
 
-    logger:debug( "Player " .. ply:GetName() .. " ( " .. steamID64 .. " ) left at " .. now )
-
     if not self.sessions[steamID64] then
-        logger:debug( "No pending update for above player, did they leave before database returned?" )
         return
     end
 
@@ -193,16 +176,14 @@ hook.Add( "Think", "CFC_Time_Init", function()
     ctime:startTimer()
 end )
 
-hook.Add( "PlayerFullLoad", "CFC_Time_PlayerInit", function( ply )
+hook.Add( "PlayerInitialSpawn", "CFC_Time_PlayerInit", function( ply )
     if ply:IsBot() then return end
 
-    logger:debug( "Player fully loaded: ", ply )
     ctime:initPlayer( ply )
 end )
 
 hook.Add( "PlayerDisconnected", "CFC_Time_PlayerCleanup", function( ply )
     if ply:IsBot() then return end
-
-    logger:debug( "Player disconnected: ", ply )
+    
     ctime:cleanupPlayer( ply )
 end )

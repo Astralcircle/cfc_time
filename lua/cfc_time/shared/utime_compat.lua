@@ -5,7 +5,6 @@ Utime = {}
 CreateConVar( "utime_welcome", "1", FCVAR_ARCHIVE )
 CreateConVar( "utime_enable", "1", FCVAR_ARCHIVE )
 
-local logger = CFCTime.Logger
 local plyMeta = FindMetaTable( "Player" )
 
 -- GetUTime returns the total time the player has played on the server excluding the current session
@@ -48,14 +47,6 @@ if SERVER then
         local totalTime, lastVisit = utimeData.totaltime, utimeData.lastvisit
 
         if not totalTime or not lastVisit then
-            logger:info(
-                string.format(
-                    "Player %s [%s] had no existing UTime data",
-                    ply:GetName(),
-                    steamID
-                )
-            )
-
             return
         end
 
@@ -63,22 +54,11 @@ if SERVER then
 
         CFCTime.Storage:CreateSession( steamID, sessionStart, totalTime )
 
-        logger:info(
-            string.format(
-                "Player %s [%s] migrated from UTime with existing time of %d",
-                ply:GetName(),
-                steamID,
-                totalTime
-            )
-        )
-
         return totalTime
     end
 
     hook.Add( "CFC_Time_PlayerInitialTime", "CFC_Time_UtimeCompat", function( ply, isFirstVisit, timeStruct )
         if not isFirstVisit then return end
-
-        logger:debug( "[UtimeCompat] Received PlayerInitialTime hook for first-time player - migrating time!" )
 
         local totalUtime = compat:MigratePlayerFromUtime( ply )
 
